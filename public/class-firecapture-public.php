@@ -60,17 +60,65 @@ class Firecapture_Public {
 		//cookie parameters
 		$cookie_name = "_fire_capture_cookie";
 		$cookie_val = ""; 
+		$good_to_go = true;
+		$good_for_cookie = true;
+		$data_id = 0;
+		$query_string = $_SERVER['QUERY_STRING'];
+
+		global $wpdb;
+		$table = $wpdb->prefix.'fire_capture_table';
+		$all_result = $wpdb->get_results("SELECT * FROM $table");
+		//print_r($all_result);
+		$conact_result = "";
+		if( !empty($all_result)):
+			foreach($all_result as $r):
+				if($r->params == $query_string):
+					$good_to_go = false;
+					$data_id = $r->id;
+				endif;
+			endforeach;
+		endif;
+
+		//print_r($conact_result);
 
 		//get query string or utm parameters
-		$query_string = $_SERVER['QUERY_STRING'];
-		if($query_string != null):
+
+		if($query_string != null && !is_admin()):
+			$referer = (isset($_SERVER['HTTP_REFERER'])) ? '&fire_cook_ref='.$_SERVER['HTTP_REFERER'] : null;
+
+			if($good_to_go):
+				global $wpdb;
+				$table = $wpdb->prefix.'fire_capture_table';
+				$data = array('name' => "data",
+								'params' => $query_string,
+								'ref' => "rr",
+								'page' => "page");
+				echo (!$wpdb->insert($table,$data))? 'Please dont duplicate name' : 'Sucessfully inserted';
+				$data_id = $wpdb->insert_id;
+			endif;
 			if(!isset($_COOKIE[$cookie_name])){
 
 				$cookie_val = $query_string;
 
-				$cookie_val .= (isset($_SERVER['HTTP_REFERER'])) ? '&ref='.$_SERVER['HTTP_REFERER'] : null;
+				$cookie_val .= '&fire_data_id='.$data_id;
+
+				$cookie_val .= $referer;
 
 				setcookie($cookie_name,$cookie_val,time() + (86400 * 30), "/");
+			}else{
+				$cookie_val = $_COOKIE['_fire_capture_cookie'];
+				$arr = explode(";;",$cookie_val);
+
+				$current_value = $query_string .'&fire_data_id='.$data_id . $referer;
+				foreach($arr as $a){
+					$inner_arr = explode("&fire_cook_ref",$a);
+					if($inner_arr[0] == $current_value)
+						$good_for_cookie = false;
+				}
+				if($good_for_cookie){
+					$value = $cookie_val . ";;" . $current_value;
+					echo (setcookie($cookie_name,$value,time() + (86400 * 30), "/")) ? "yes" : "no";
+				}
 			}
 		endif;
 			// $query_string = $_SERVER['QUERY_STRING'];

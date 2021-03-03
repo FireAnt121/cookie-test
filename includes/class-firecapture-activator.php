@@ -31,16 +31,21 @@ class Firecapture_Activator {
 	 */
 	public static function activate() {
 		global $wpdb;
-		$table_name = $wpdb->prefix .'fire_capture_css_table';
+		$table_name = $wpdb->prefix .'fire_capture_table';
 
 		$charset_collate = $wpdb->get_charset_collate();
 		
 		$sql = "CREATE TABLE IF NOT EXISTS $table_name (
 		  id mediumint(9) NOT NULL AUTO_INCREMENT,
 		  name varchar(255) NOT NULL,
-		  color varchar(255) NOT NULL,
+		  params longtext NOT NULL,
+		  ref varchar(255),
+		  page varchar(255) NOT NULL,
 		  PRIMARY KEY  (id)
 		) $charset_collate;";
+
+		require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+		dbDelta( $sql );
 	}
 
 }

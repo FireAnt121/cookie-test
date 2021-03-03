@@ -57,14 +57,17 @@ class Firecapture_Admin {
 
 	function get_from_cookie($atts){
 		$a = shortcode_atts( array(
+			'id'  => 'id',
 			'name' => 'caption',
 		), $atts );
 
 		$cookie_val = $_COOKIE['_fire_capture_cookie'];
-
-		parse_str($cookie_val,$cookie_arr);
-
-		return esc_attr($cookie_arr[$a['name']]);
+		$arr = explode(";;",$cookie_val);
+		foreach($arr as $ar){
+			parse_str($ar,$cookie_arr);
+			if( $a['id'] == $cookie_arr['fire_data_id'])
+				return esc_attr($cookie_arr[$a['name']]);
+		}
 	}
 	/**
 	 * Register the stylesheets for the admin area.
